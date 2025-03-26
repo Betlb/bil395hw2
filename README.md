@@ -13,9 +13,13 @@ Bu proje, 5 farklı programlama dili kullanılarak geliştirilmiş basit bir kom
 
 ### ▶️ Çalıştırma
 
-#### Rust rustHesapMakinesi directorysinde
 ```bash
+#### Rust rustHesapMakinesi directorysinde
 cargo run
 ### ✅ Test Çalıştırma
-```bash
-cargo test# bil395hw2
+cargo test
+
+#### Perl perlHesapMakinesi directorysinde
+perl perl_hesap_makinesi.pl
+### ✅ Test Çalıştırma
+perl perl_hesap_makinesi_test.pl
