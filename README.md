@@ -1,6 +1,6 @@
-# rustHesapMakinesi 🧮
+# HesapMakineleri 🧮
 
-Bu proje, Rust programlama dili kullanılarak geliştirilmiş basit bir komut satırı hesap makinesidir. 
+Bu proje, 5 farklı programlama dili kullanılarak geliştirilmiş basit bir komut satırı hesap makinesidir. 
 
 ## Özellikler
 
@@ -10,14 +10,10 @@ Bu proje, Rust programlama dili kullanılarak geliştirilmiş basit bir komut sa
 ✅ Tanımsız değişken ve sıfıra bölme hatası yönetimi  
 ✅ Basit hata mesajları
 
-## Kurulum ve Çalıştırma
-
-### 1. Projeyi klonla
-```bash
-git clone https://github.com/kullaniciadi/rustHesapMakinesi.git
-cd rustHesapMakinesi
 
 ### ▶️ Çalıştırma
+
+#### Rust rustHesapMakinesi directorysinde
 ```bash
 cargo run
 ### ✅ Test Çalıştırma
