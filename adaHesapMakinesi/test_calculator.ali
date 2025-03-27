@@ -1,0 +1,87 @@
+V "GNAT Lib v9"
+M P W=b
+P ZX
+
+RN
+RV NO_FLOATING_POINT
+RV NO_IO
+RV NO_DYNAMIC_SIZED_OBJECTS
+RV SPARK_05
+
+U test_calculator%b	test_calculator.adb	9e640460 NE OO SU
+W ada%s			ada.ads			ada.ali
+W ada.float_text_io%s	a-flteio.ads		a-flteio.ali
+W ada.strings%s		a-string.ads		a-string.ali
+W ada.strings.fixed%s	a-strfix.adb		a-strfix.ali
+W ada.text_io%s		a-textio.adb		a-textio.ali
+Z system.concat_2%s	s-conca2.adb		s-conca2.ali
+Z system.concat_3%s	s-conca3.adb		s-conca3.ali
+Z system.img_int%s	s-imgint.adb		s-imgint.ali
+
+D ada.ads		20210601075304 76789da1 ada%s
+D a-charac.ads		20210601075304 2d3ec45b ada.characters%s
+D a-chlat1.ads		20210601075304 66457d31 ada.characters.latin_1%s
+D a-except.ads		20210601075304 291912d5 ada.exceptions%s
+D a-flteio.ads		20210601075304 e18a47a0 ada.float_text_io%s
+D a-ioexce.ads		20210601075304 e4a01f64 ada.io_exceptions%s
+D a-stream.ads		20210601075304 119b8fb3 ada.streams%s
+D a-string.ads		20210601075304 90ac6797 ada.strings%s
+D a-strfix.ads		20210601075304 d07c346e ada.strings.fixed%s
+D a-strmap.ads		20210601075304 e8bb714a ada.strings.maps%s
+D a-tags.ads		20210601075304 491b781d ada.tags%s
+D a-textio.ads		20210601075304 881db35a ada.text_io%s
+D a-tiflio.ads		20210601075304 56fbda09 ada.text_io.float_io%s
+D a-unccon.ads		20210601075304 0e9b276f ada.unchecked_conversion%s
+D interfac.ads		20210601075304 5ab55268 interfaces%s
+D i-cstrea.ads		20210601075304 e53d8b8e interfaces.c_streams%s
+D system.ads		20210601075304 4635ec04 system%s
+D s-conca2.ads		20210601075304 02a0d7d0 system.concat_2%s
+D s-conca3.ads		20210601075304 0b705ca5 system.concat_3%s
+D s-crtl.ads		20210601075304 0ebbdb71 system.crtl%s
+D s-exctab.ads		20210601075304 54135002 system.exception_table%s
+D s-ficobl.ads		20210601075304 078245e4 system.file_control_block%s
+D s-imgint.ads		20210601075304 02dbe0c2 system.img_int%s
+D s-parame.ads		20210601075304 48ec542b system.parameters%s
+D s-secsta.ads		20210601075304 20bbe636 system.secondary_stack%s
+D s-soflin.ads		20210601075304 a7318a92 system.soft_links%s
+D s-stache.ads		20210601075304 a37c21ec system.stack_checking%s
+D s-stalib.ads		20210601075304 09bd3940 system.standard_library%s
+D s-stoele.ads		20210601075304 2dc34a04 system.storage_elements%s
+D s-traent.ads		20210601075304 005bf670 system.traceback_entries%s
+D s-unstyp.ads		20210601075304 34867c83 system.unsigned_types%s
+D s-wchcon.ads		20210601075304 1b7d22d2 system.wch_con%s
+D test_calculator.adb	20250327111517 278fc4f4 test_calculator%b
+X 1 ada.ads
+16K9*Ada 20e8 33|1r6 2r6 3r6 4r5 5r5 6r5
+X 5 a-flteio.ads
+20K13*Float_Text_IO[13|46] 33|2w10 5r9
+X 8 a-string.ads
+16K13*Strings 35e16 33|3r10 6r9
+X 9 a-strfix.ads
+18K21*Fixed 251e22 33|3w18 6r17
+X 12 a-textio.ads
+49K13*Text_IO 471e16 33|1w10 4r9
+166U14*New_Line 33|72s4 83s4
+263U14*Put_Line 33|20s10 23s10 71s4 84s4 85s4 86s4 87s4 88s4
+X 33 test_calculator.adb
+8U11*Test_Calculator 8b11 91l5 91t20
+10i4 Total_Tests{integer} 17m7 17r22 85r45 89r50
+11i4 Passed_Tests{integer} 19m10 19r26 86r45 89r28
+12i4 Failed_Tests{integer} 22m10 22r26 87r46
+15U14 Print_Test_Result 15b14 15>32 15>52 25l8 25t25 75s4 76s4 77s4 78s4
+. 79s4 80s4
+15a32 Test_Name{string} 20r28 23r28
+15b52 Passed{boolean} 18r10
+28V13 Test_Addition{boolean} 28b13 33l8 33t21 75s42
+29f7 Result{float} 31m7 32r18
+35V13 Test_Subtraction{boolean} 35b13 40l8 40t24 76s44
+36f7 Result{float} 38m7 39r18
+42V13 Test_Multiplication{boolean} 42b13 47l8 47t27 77s42
+43f7 Result{float} 45m7 46r18
+49V13 Test_Division{boolean} 49b13 54l8 54t21 78s41
+50f7 Result{float} 52m7 53r18
+56V13 Test_Float_Operations{boolean} 56b13 61l8 61t29 79s55
+57f7 Result{float} 59m7 60r18
+63V13 Test_Complex_Expression{boolean} 63b13 68l8 68t31 80s46
+64f7 Result{float} 66m7 67r18
+

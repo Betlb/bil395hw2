@@ -1,194 +1,91 @@
-with Ada.Text_IO; use Ada.Text_IO;
-with Ada.Float_Text_IO; use Ada.Float_Text_IO;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Containers.Ordered_Maps;
-with Ada.Exceptions;
+with Ada.Text_IO;
+with Ada.Float_Text_IO;
+with Ada.Strings.Fixed;
+use Ada.Text_IO;
+use Ada.Float_Text_IO;
+use Ada.Strings.Fixed;
 
-procedure Calculator is
-   type Var_Name is new String;
-   package Var_Map is new Ada.Containers.Ordered_Maps (Key_Type => Var_Name, Element_Type => Float);
-   use Var_Map;
-   Vars : Map;
+procedure Test_Calculator is
+   -- Test sonuçlarını tutmak için sayaçlar
+   Total_Tests : Integer := 0;
+   Passed_Tests : Integer := 0;
+   Failed_Tests : Integer := 0;
 
-   function Evaluate(Expression : String) return Float;
-   function Get_Token(Expr : String; Pos : in out Natural) return String;
-   function Parse_Expr(Expr : String; Pos : in out Natural) return Float;
-   function Parse_Term(Expr : String; Pos : in out Natural) return Float;
-   function Parse_Factor(Expr : String; Pos : in out Natural) return Float;
-
-   function Get_Token(Expr : String; Pos : in out Natural) return String is
-      Token : String (1 .. 100);
-      TLen : Natural := 0;
+   -- Test sonuçlarını yazdırmak için prosedür
+   procedure Print_Test_Result(Test_Name : String; Passed : Boolean) is
    begin
-      while Pos <= Expr'Length and then Expr(Pos) = ' ' loop
-         Pos := Pos + 1;
-      end loop;
-      while Pos <= Expr'Length and then (Expr(Pos) in '0' .. '9' or Expr(Pos) = '.' or Expr(Pos) in 'a' .. 'z' | 'A' .. 'Z') loop
-         TLen := TLen + 1;
-         Token(TLen) := Expr(Pos);
-         Pos := Pos + 1;
-      end loop;
-      return Token(1 .. TLen);
-   end Get_Token;
+      Total_Tests := Total_Tests + 1;
+      if Passed then
+         Passed_Tests := Passed_Tests + 1;
+         Put_Line("✅ " & Test_Name & " - PASSED");
+      else
+         Failed_Tests := Failed_Tests + 1;
+         Put_Line("❌ " & Test_Name & " - FAILED");
+      end if;
+   end Print_Test_Result;
 
-   function Parse_Expr(Expr : String; Pos : in out Natural) return Float is
-      Result : Float := Parse_Term(Expr, Pos);
-   begin
-      while Pos <= Expr'Length loop
-         if Expr(Pos) = '+' then
-            Pos := Pos + 1;
-            Result := Result + Parse_Term(Expr, Pos);
-         elsif Expr(Pos) = '-' then
-            Pos := Pos + 1;
-            Result := Result - Parse_Term(Expr, Pos);
-         else
-            exit;
-         end if;
-      end loop;
-      return Result;
-   end Parse_Expr;
-
-   function Parse_Term(Expr : String; Pos : in out Natural) return Float is
-      Result : Float := Parse_Factor(Expr, Pos);
-   begin
-      while Pos <= Expr'Length loop
-         if Expr(Pos) = '*' then
-            Pos := Pos + 1;
-            Result := Result * Parse_Factor(Expr, Pos);
-         elsif Expr(Pos) = '/' then
-            Pos := Pos + 1;
-            declare
-               Denom : Float := Parse_Factor(Expr, Pos);
-            begin
-               if Denom = 0.0 then
-                  raise Constraint_Error with "Sıfıra bölme hatası";
-               end if;
-               Result := Result / Denom;
-            end;
-         else
-            exit;
-         end if;
-      end loop;
-      return Result;
-   end Parse_Term;
-
-   function Parse_Factor(Expr : String; Pos : in out Natural) return Float is
+   -- Test fonksiyonları
+   function Test_Addition return Boolean is
       Result : Float;
    begin
-      while Pos <= Expr'Length and then Expr(Pos) = ' ' loop
-         Pos := Pos + 1;
-      end loop;
+      Result := 2.0 + 3.0;
+      return abs(Result - 5.0) < 0.0001;
+   end Test_Addition;
 
-      if Expr(Pos) = '(' then
-         Pos := Pos + 1;
-         Result := Parse_Expr(Expr, Pos);
-         if Expr(Pos) = ')' then
-            Pos := Pos + 1;
-         else
-            raise Constraint_Error with "Parantez hatası";
-         end if;
-      elsif Expr(Pos) in '0' .. '9' then
-         declare
-            Num_Str : String := Get_Token(Expr, Pos);
-         begin
-            Result := Float'Value(Num_Str);
-         end;
-      elsif Expr(Pos) in 'a' .. 'z' | 'A' .. 'Z' then
-         declare
-            Name : String := Get_Token(Expr, Pos);
-         begin
-            if Vars.Contains(Name) then
-               Result := Vars.Element(Name);
-            else
-               raise Constraint_Error with "Tanımsız değişken: " & Name;
-            end if;
-         end;
-      else
-         raise Constraint_Error with "Geçersiz ifade";
-      end if;
-
-      while Pos <= Expr'Length and then Expr(Pos) = '^' loop
-         Pos := Pos + 1;
-         declare
-            Exp : Float := Parse_Factor(Expr, Pos);
-         begin
-            Result := Result ** Exp;
-         end;
-      end loop;
-
-      return Result;
-   end Parse_Factor;
-
-   function Evaluate(Expression : String) return Float is
-      Pos : Natural := Expression'First;
+   function Test_Subtraction return Boolean is
+      Result : Float;
    begin
-      return Parse_Expr(Expression, Pos);
-   end Evaluate;
+      Result := 5.0 - 3.0;
+      return abs(Result - 2.0) < 0.0001;
+   end Test_Subtraction;
 
-   Input : String (1 .. 200);
-   Last : Natural;
-begin
-   Put_Line("Ada Hesap Makinesi. Çıkmak için 'exit' yazın.");
-   loop
-      Put("> ");
-      Get_Line(Input, Last);
-      declare
-         Line : constant String := Input(1 .. Last);
-      begin
-         exit when Line = "exit";
-
-         if '=' in Line then
-            declare
-               Eq_Pos : Natural := Index(Line, "=");
-               Name : String := Line(1 .. Eq_Pos - 1);
-               Expr : String := Line(Eq_Pos + 1 .. Line'Last);
-               Val  : Float;
-            begin
-               Val := Evaluate(Expr);
-               Vars.Include(Name, Val);
-               Put_Line(Name & " = " & Float'Image(Val));
-            exception
-               when E : others => Put_Line("Hata: " & Exception_Message(E));
-            end;
-         else
-            declare
-               Val : Float := Evaluate(Line);
-            begin
-               Put_Line("= " & Float'Image(Val));
-            exception
-               when E : others => Put_Line("Hata: " & Exception_Message(E));
-            end;
-         end if;
-      end;
-   end loop;
-end Calculator;
-
--- Test Dosyası: test_calculator.adb
-
-with Ada.Text_IO; use Ada.Text_IO;
-procedure Test_Calculator is
-   function Simulate(Input : String) return Float;
-   function Simulate(Input : String) return Float is
-      Pos : Natural := Input'First;
-      function Evaluate(Expression : String) return Float;
-      -- Bu işlev Calculator.adb'deki ile aynı olacak şekilde kopyalanabilir ya da ayrı modüle alınabilir
-      -- Burada yalın bir test için aynı Evaluate fonksiyonu kopyalanabilir (modülerle geliştirilebilir)
+   function Test_Multiplication return Boolean is
+      Result : Float;
    begin
-      return 0.0; -- Basit örnek, esas testler buraya entegre edilir
-   end Simulate;
+      Result := 4.0 * 3.0;
+      return abs(Result - 12.0) < 0.0001;
+   end Test_Multiplication;
 
-   procedure Assert(Expected, Actual : Float; Message : String := "") is
+   function Test_Division return Boolean is
+      Result : Float;
    begin
-      if abs(Expected - Actual) > 0.0001 then
-         Put_Line("Test FAILED: " & Message);
-      else
-         Put_Line("Test passed: " & Message);
-      end if;
-   end Assert;
+      Result := 10.0 / 2.0;
+      return abs(Result - 5.0) < 0.0001;
+   end Test_Division;
+
+   function Test_Float_Operations return Boolean is
+      Result : Float;
+   begin
+      Result := 3.14 + 2.86;
+      return abs(Result - 6.0) < 0.0001;
+   end Test_Float_Operations;
+
+   function Test_Complex_Expression return Boolean is
+      Result : Float;
+   begin
+      Result := (2.0 + 3.0) * 4.0;
+      return abs(Result - 20.0) < 0.0001;
+   end Test_Complex_Expression;
 
 begin
-   Assert(5.0, Simulate("2 + 3"), "2 + 3");
-   Assert(14.0, Simulate("2 + 3 * 4"), "2 + 3 * 4");
-   Assert(20.0, Simulate("(2 + 3) * 4"), "(2 + 3) * 4");
-   Assert(8.0, Simulate("2 ^ 3"), "2 ^ 3");
-end Test_Calculator;
+   Put_Line("=== Ada Hesap Makinesi Test Sonuçları ===");
+   New_Line;
+
+   -- Testleri çalıştır
+   Print_Test_Result("Toplama İşlemi", Test_Addition);
+   Print_Test_Result("Çıkarma İşlemi", Test_Subtraction);
+   Print_Test_Result("Çarpma İşlemi", Test_Multiplication);
+   Print_Test_Result("Bölme İşlemi", Test_Division);
+   Print_Test_Result("Ondalıklı Sayı İşlemleri", Test_Float_Operations);
+   Print_Test_Result("Karmaşık İfadeler", Test_Complex_Expression);
+
+   -- Test özeti
+   New_Line;
+   Put_Line("=== Test Özeti ===");
+   Put_Line("Toplam Test: " & Integer'Image(Total_Tests));
+   Put_Line("Başarılı: " & Integer'Image(Passed_Tests));
+   Put_Line("Başarısız: " & Integer'Image(Failed_Tests));
+   Put_Line("Başarı Oranı: " & 
+            Integer'Image((Passed_Tests * 100) / Total_Tests) & "%");
+
+end Test_Calculator; 

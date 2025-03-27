@@ -1,181 +1,220 @@
 with Ada.Text_IO; use Ada.Text_IO;
-with Ada.Float_Text_IO; use Ada.Float_Text_IO;
+with Ada.Float_Text_IO;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Containers.Hashed_Maps;
-with Ada.Strings.Hash;
-with Ada.Exceptions; use Ada.Exceptions;
 
-procedure Calculator is
-
-   package String_Maps is new Ada.Containers.Hashed_Maps
-     (Key_Type        => Unbounded_String,
-      Element_Type    => Float,
-      Hash            => Ada.Strings.Hash,
-      Equivalent_Keys => "=");
-
-   use String_Maps;
-   Vars : Map;
-
-   function Get_Token(Expr : String; Pos : in out Natural) return String;
-   function Parse_Expr(Expr : String; Pos : in out Natural) return Float;
-   function Parse_Term(Expr : String; Pos : in out Natural) return Float;
-   function Parse_Factor(Expr : String; Pos : in out Natural) return Float;
-   function Evaluate(Expression : String) return Float;
-
-   function Get_Token(Expr : String; Pos : in out Natural) return String is
-      Token : String (1 .. 100);
-      TLen  : Natural := 0;
+package body Calculator is
+   function Is_Operator (Ch : Character) return Boolean is
    begin
-      while Pos <= Expr'Length and then Expr(Pos) = ' ' loop
-         Pos := Pos + 1;
-      end loop;
-
-      while Pos <= Expr'Length and then
-         (Expr(Pos) in '0' .. '9' or Expr(Pos) = '.' or
-          Expr(Pos) in 'a' .. 'z' | 'A' .. 'Z')
-      loop
-         TLen := TLen + 1;
-         Token(TLen) := Expr(Pos);
-         Pos := Pos + 1;
-      end loop;
-
-      return Token(1 .. TLen);
-   end Get_Token;
-
-   function Parse_Expr(Expr : String; Pos : in out Natural) return Float is
-      Result : Float := Parse_Term(Expr, Pos);
+      return Ch in '+' | '-' | '*' | '/' | '^';
+   end Is_Operator;
+   
+   function Get_Variable_Value 
+     (Name : String; 
+      Variables : in out String_Vectors.Vector) return Float is
+      I : Natural := 0;
    begin
-      while Pos <= Expr'Length loop
-         if Expr(Pos) = '+' then
-            Pos := Pos + 1;
-            Result := Result + Parse_Term(Expr, Pos);
-         elsif Expr(Pos) = '-' then
-            Pos := Pos + 1;
-            Result := Result - Parse_Term(Expr, Pos);
-         else
+      while I < Natural(Variables.Length) - 1 loop
+         if To_String(Variables.Element(I)) = Name then
+            return Float'Value(To_String(Variables.Element(I+1)));
+         end if;
+         I := I + 2;
+      end loop;
+      raise Undefined_Variable;
+   end Get_Variable_Value;
+
+   procedure Set_Variable 
+     (Name : String; 
+      Value : String;
+      Variables : in out String_Vectors.Vector) is
+      I : Natural := 0;
+      Found : Boolean := False;
+   begin
+      while I < Natural(Variables.Length) - 1 loop
+         if To_String(Variables.Element(I)) = Name then
+            Variables.Replace_Element(I+1, To_Unbounded_String(Value));
+            Found := True;
             exit;
          end if;
-      end loop;
-      return Result;
-   end Parse_Expr;
-
-   function Parse_Term(Expr : String; Pos : in out Natural) return Float is
-      Result : Float := Parse_Factor(Expr, Pos);
-   begin
-      while Pos <= Expr'Length loop
-         if Expr(Pos) = '*' then
-            Pos := Pos + 1;
-            Result := Result * Parse_Factor(Expr, Pos);
-         elsif Expr(Pos) = '/' then
-            Pos := Pos + 1;
-            declare
-               Denom : Float := Parse_Factor(Expr, Pos);
-            begin
-               if Denom = 0.0 then
-                  raise Constraint_Error with "Sıfıra bölme hatası";
-               end if;
-               Result := Result / Denom;
-            end;
-         else
-            exit;
-         end if;
-      end loop;
-      return Result;
-   end Parse_Term;
-
-   function Parse_Factor(Expr : String; Pos : in out Natural) return Float is
-      Result : Float;
-   begin
-      while Pos <= Expr'Length and then Expr(Pos) = ' ' loop
-         Pos := Pos + 1;
+         I := I + 2;
       end loop;
 
-      if Expr(Pos) = '(' then
-         Pos := Pos + 1;
-         Result := Parse_Expr(Expr, Pos);
-         if Expr(Pos) = ')' then
-            Pos := Pos + 1;
-         else
-            raise Constraint_Error with "Parantez hatası";
-         end if;
-
-      elsif Expr(Pos) in '0' .. '9' then
-         declare
-            Num_Str : String := Get_Token(Expr, Pos);
-         begin
-            Result := Float'Value(Num_Str);
-         end;
-
-      elsif Expr(Pos) in 'a' .. 'z' | 'A' .. 'Z' then
-         declare
-            Name_Str : String := Get_Token(Expr, Pos);
-            Name     : Unbounded_String := To_Unbounded_String(Name_Str);
-         begin
-            if Vars.Contains(Name) then
-               Result := Vars.Element(Name);
-            else
-               raise Constraint_Error with "Tanımsız değişken: " & Name_Str;
-            end if;
-         end;
-
-      else
-         raise Constraint_Error with "Geçersiz ifade";
+      if not Found then
+         Variables.Append(To_Unbounded_String(Name));
+         Variables.Append(To_Unbounded_String(Value));
       end if;
-
-      while Pos <= Expr'Length and then Expr(Pos) = '^' loop
-         Pos := Pos + 1;
-         declare
-            Exp : Float := Parse_Factor(Expr, Pos);
-         begin
-            Result := Result ** Exp;
-         end;
-      end loop;
-
-      return Result;
-   end Parse_Factor;
-
-   function Evaluate(Expression : String) return Float is
-      Pos : Natural := Expression'First;
+   end Set_Variable;
+   
+   function Calculate (Left, Right : Float; Op : Character) return Float is
    begin
-      return Parse_Expr(Expression, Pos);
-   end Evaluate;
+      case Op is
+         when '+' => return Left + Right;
+         when '-' => return Left - Right;
+         when '*' => return Left * Right;
+         when '/' => return Left / Right;  -- Ada'nın yerleşik kontrolü kullanılacak
+         when '^' => return Float'(Left ** Natural(Right));
+         when others => raise Constraint_Error;
+      end case;
+   end Calculate;
 
-   Input : String (1 .. 200);
-   Last  : Natural;
+   function Evaluate_Expression 
+     (Expr : String; 
+      Variables : in out String_Vectors.Vector) return Float is
+      Tokens : String_Vectors.Vector;
+   begin
+      -- Clear previous tokens
+      Tokens.Clear;
 
-begin
-   Put_Line("Ada Hesap Makinesi. Çıkmak için 'exit' yazın.");
-   loop
-      Put("> ");
-      Get_Line(Input, Last);
+      -- Tokenization
       declare
-         Line : constant String := Input(1 .. Last);
+         I : Positive := Expr'First;
       begin
-         exit when Line = "exit";
-
-         if Line'Length > 0 and then '=' in Line then
-            declare
-               Eq_Pos : Natural := Index(Line, "=");
-               Name   : Unbounded_String := To_Unbounded_String(Line(1 .. Eq_Pos - 1));
-               Expr   : String := Line(Eq_Pos + 1 .. Line'Last);
-               Val    : Float;
-            begin
-               Val := Evaluate(Expr);
-               Vars.Include(Name, Val);
-               Put_Line(To_String(Name) & " = " & Float'Image(Val));
-            exception
-               when E : others => Put_Line("Hata: " & Exception_Message(E));
-            end;
-
-         else
-            declare
-               Val : Float := Evaluate(Line);
-            begin
-               Put_Line("= " & Float'Image(Val));
-            exception
-               when E : others => Put_Line("Hata: " & Exception_Message(E));
-            end;
-         end if;
+         while I <= Expr'Last loop
+            -- Skip whitespace
+            if Expr(I) = ' ' then
+               I := I + 1;
+               goto Continue;
+            end if;
+            
+            -- Handle operators
+            if Is_Operator(Expr(I)) then
+               Tokens.Append(To_Unbounded_String(Expr(I..I)));
+               
+            -- Handle numbers (including negative numbers)
+            elsif Expr(I) in '0'..'9' or Expr(I) = '.' or 
+                  (Expr(I) = '-' and (I = Expr'First or Is_Operator(Expr(I-1)) or Expr(I-1) = '(')) then
+               -- Number token
+               declare
+                  Start : constant Positive := I;
+                  Finish : Positive := I;
+                  Is_Negative : constant Boolean := Expr(I) = '-';
+               begin
+                  -- Move past negative sign if present
+                  if Is_Negative then
+                     I := I + 1;
+                     Finish := I;
+                  end if;
+                  
+                  -- Find end of number
+                  while Finish < Expr'Last and then 
+                        (Expr(Finish+1) in '0'..'9' or Expr(Finish+1) = '.') loop
+                     Finish := Finish + 1;
+                  end loop;
+                  
+                  Tokens.Append(To_Unbounded_String(Expr(Start..Finish)));
+                  I := Finish;
+               end;
+               
+            -- Handle parentheses
+            elsif Expr(I) in '(' | ')' then
+               Tokens.Append(To_Unbounded_String(Expr(I..I)));
+               
+            -- Handle variables
+            elsif Expr(I) in 'a'..'z' or Expr(I) in 'A'..'Z' then
+               -- Variable token
+               declare
+                  Start : constant Positive := I;
+                  Finish : Positive := I;
+               begin
+                  while Finish < Expr'Last and then 
+                        (Expr(Finish+1) in 'a'..'z' or Expr(Finish+1) in 'A'..'Z') loop
+                     Finish := Finish + 1;
+                  end loop;
+                  
+                  -- Get variable value
+                  declare
+                     Var_Name : constant String := Expr(Start..Finish);
+                     Var_Value : constant Float := Get_Variable_Value(Var_Name, Variables);
+                  begin
+                     Tokens.Append(To_Unbounded_String(Float'Image(Var_Value)));
+                  end;
+                  
+                  I := Finish;
+               end;
+            end if;
+            
+            I := I + 1;
+            <<Continue>>
+         end loop;
       end;
-   end loop;
+      
+      -- Calculation
+      declare
+         Result : Float := 0.0;
+         Last_Operator : Character := '+';  -- Default to addition
+         Token_Count : constant Natural := Natural(Tokens.Length);
+      begin
+         -- Ensure there are tokens to process
+         if Token_Count = 0 then
+            return 0.0;
+         end if;
+
+         -- Iterate through tokens with explicit index calculation
+         for I in 1 .. Token_Count loop
+            -- Adjust index to 0-based for vector access
+            declare
+               Token_Str : constant String := To_String(Tokens.Element(I-1));
+            begin
+               -- Check if token is an operator
+               if Is_Operator(Token_Str(1)) and Token_Str'Length = 1 then
+                  Last_Operator := Token_Str(1);
+               
+               -- Check if token is a number
+               elsif Token_Str(1) in '0'..'9' or Token_Str(1) = '.' or 
+                     (Token_Str(1) = '-' and Token_Str'Length > 1) then
+                  declare
+                     Val : constant Float := Float'Value(Token_Str);
+                  begin
+                     -- Perform calculation based on last operator
+                     case Last_Operator is
+                        when '+' => Result := Result + Val;
+                        when '-' => Result := Result - Val;
+                        when '*' => Result := Result * Val;
+                        when '/' => Result := Result / Val;  -- Ada'nın yerleşik kontrolü kullanılacak
+                        when '^' => Result := Result ** Natural(Val);
+                        when others => Result := Val;  -- First number or unexpected case
+                     end case;
+                  end;
+               end if;
+            end;
+         end loop;
+         
+         return Result;
+      end;
+   end Evaluate_Expression;
+
+   procedure Run is
+   begin
+      Put_Line("Hesap Makinesi");
+      Put_Line("Çıkış için 'q' yazın");
+      
+      declare
+         Input : String(1..100);
+         Last : Natural;
+         Variables : String_Vectors.Vector;
+      begin
+         loop
+            Put("> ");
+            Get_Line(Input, Last);
+            
+            exit when Last > 0 and then Input(1) = 'q';
+            
+            begin
+               declare
+                  Result : constant Float := Evaluate_Expression(Input(1..Last), Variables);
+               begin
+                  Put("Sonuç: ");
+                  Ada.Float_Text_IO.Put(Result, Fore => 1, Aft => 2, Exp => 0);
+                  New_Line;
+               end;
+            exception
+               when Constraint_Error =>
+                  Put_Line("Hata: Sıfıra bölme");
+               when Undefined_Variable =>
+                  Put_Line("Hata: Tanımsız değişken");
+               when others =>
+                  Put_Line("Hata: Geçersiz ifade");
+            end;
+         end loop;
+      end;
+   end Run;
 end Calculator;
