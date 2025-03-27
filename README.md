@@ -15,7 +15,7 @@ Bu proje, 5 farklı programlama dili kullanılarak geliştirilmiş basit bir kom
 ### ▶️ Çalıştırma
 
 ```bash
-#### 1-Rust rustHesapMakinesi/src directorysinde
+#### 1-Rust bil395hw2 directorysinde
 cargo run
 ### ✅ Test Çalıştırma
 cargo test
